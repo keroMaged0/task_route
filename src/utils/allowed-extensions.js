@@ -1,6 +1,4 @@
 
-
-
 export const allowedExtensions = {
     image: ['jpg', 'jpeg', 'png', 'gif'],
     video: ['mp4', 'avi', 'mkv'],

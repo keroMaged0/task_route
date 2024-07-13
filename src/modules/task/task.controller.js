@@ -1,13 +1,24 @@
 import categoryModel from "../../../DB/models/category.model.js"
 import taskModel from "../../../DB/models/task.model.js"
 import { catchError } from "../../middleware/global-response.middleware.js"
+import { ApiFeature } from "../../service/api_feature.service.js";
 
 /* ==================== Get All Tasks Private Controller ==================== */
 const getTasksPrivateController = catchError(
     async (req, res) => {
         const { userId } = req.authUser;
-        const tasks = await taskModel.findOne({addBy:userId, shared: 'private' })
-        if (!tasks) return res.status(404).json({ message: 'Tasks Not Found' })
+        const { page, size, sort, ...query } = req.query
+
+        const apiFeature = new ApiFeature(req.query, taskModel.find({ addBy: userId, shared: 'private' }))
+            .pagination()
+            .sorting(sort)
+
+        const tasks = await apiFeature.mongooseQuery
+            .populate([
+                { path: 'addBy', select: 'name' },
+                { path: 'categoryId', select: 'name' },
+            ])
+
 
         res.status(200).json({ message: 'Successfully', data: tasks })
     }
@@ -16,8 +27,18 @@ const getTasksPrivateController = catchError(
 /* ==================== Get All Tasks Public Controller ==================== */
 const getTasksPublicController = catchError(
     async (req, res) => {
-        const tasks = await taskModel.find({ shared: 'public' })
-        if (!tasks) return res.status(404).json({ message: 'Tasks Not Found' })
+        const { page, size, sort, ...query } = req.query
+
+        const apiFeature = new ApiFeature(req.query, taskModel.find({ shared: 'public' }))
+            .pagination()
+            .sorting(sort)
+
+        const tasks = await apiFeature.mongooseQuery
+            .populate([
+                { path: 'addBy', select: 'name' },
+                { path: 'categoryId', select: 'name' },
+            ])
+
 
         res.status(200).json({ message: 'Successfully', data: tasks })
     }

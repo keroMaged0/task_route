@@ -1,6 +1,7 @@
 import categoryModel from "../../../DB/models/category.model.js"
 import taskModel from "../../../DB/models/task.model.js"
 import { catchError } from "../../middleware/global-response.middleware.js"
+import { ApiFeature } from "../../service/api_feature.service.js"
 
 /* ==================== Get All Category Controller ==================== */
 const getCategoriesController = catchError(
@@ -89,11 +90,19 @@ const deleteCategoryController = catchError(
 const getAllCategorySpecificUserController = catchError(
     async (req, res) => {
         const { userId } = req.authUser
+        const { page, size, sort, ...query } = req.query
 
-        const category = await categoryModel.find({ addBy: userId }).populate([
-            { path: 'addBy', select: 'name' },
-            { path: 'Tasks' },
-        ])
+        const apiFeature = new ApiFeature(req.query, categoryModel.find({ addBy: userId }))
+        .pagination()
+        .sorting(sort) 
+
+        const category = await apiFeature.mongooseQuery
+            .populate([
+                { path: 'addBy', select: 'name' },
+                { path: 'updatedBy', select: 'name' },
+                { path: 'Tasks' },
+            ])
+
         if (!category) return res.status(404).json({ message: 'Category Not Found' })
 
 
